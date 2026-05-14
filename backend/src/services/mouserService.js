@@ -47,7 +47,7 @@ const searchMouser = async (components) => {
                 results.push({
                     name: component.name,
                     mouser: {
-                        inStock: part.Availability || '0',
+                        inStock: part.Availability ? part.Availability.replace(/\D/g, '') || '0' : '0',
                         price: price,
                         url: part.ProductDetailUrl || 'N/A',
                         manufacturer: part.Manufacturer || 'N/A'
