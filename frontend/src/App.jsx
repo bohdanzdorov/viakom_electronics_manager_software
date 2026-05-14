@@ -23,8 +23,9 @@ function App() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      // Using localhost:3000 as defined in our backend
-      const response = await fetch('http://localhost:3000/api/components/upload', {
+      const uploadUrl = import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK || 'http://localhost:3000/api/components/upload';
+
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });
