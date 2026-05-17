@@ -1,6 +1,7 @@
 const { parseExcel } = require('../services/excelService');
 const { searchMouser } = require('../services/mouserService');
 const { searchTME } = require('../services/tmeService');
+const { searchDigikey } = require('../services/digikeyService');
 const fs = require('fs');
 
 const uploadAndSearch = async (req, res) => {
@@ -13,8 +14,11 @@ const uploadAndSearch = async (req, res) => {
         const components = await parseExcel(req.file.path);
         
         // 2. Call APIs
-        const mouserResults = await searchMouser(components);
-        const tmeResults = await searchTME(components);
+        const [mouserResults, tmeResults, digikeyResults] = await Promise.all([
+            searchMouser(components),
+            searchTME(components),
+            searchDigikey(components)
+        ]);
         
         // Cleanup the file from the 'uploads/' folder since we have the data in memory
         fs.unlinkSync(req.file.path);
@@ -23,12 +27,14 @@ const uploadAndSearch = async (req, res) => {
         const mergedResults = components.map(comp => {
             const mouserData = mouserResults.find(m => m.name === comp.name)?.mouser || {};
             const tmeData = tmeResults.find(t => t.name === comp.name)?.tme || {};
+            const digikeyData = digikeyResults.find(d => d.name === comp.name)?.digikey || {};
             
             return {
                 name: comp.name,
                 requestedQuantity: comp.quantity,
                 mouser: mouserData,
-                tme: tmeData
+                tme: tmeData,
+                digikey: digikeyData
             };
         });
 

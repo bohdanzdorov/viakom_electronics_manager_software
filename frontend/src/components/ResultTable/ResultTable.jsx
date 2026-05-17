@@ -16,16 +16,24 @@ const ResultTable = ({ item }) => {
           </tr>
         </thead>
         <tbody>
-          <ProviderRow 
-            providerName="Mouser" 
-            providerData={item.mouser} 
-            requestedQuantity={item.requestedQuantity} 
-          />
-          <ProviderRow 
-            providerName="TME.eu" 
-            providerData={item.tme} 
-            requestedQuantity={item.requestedQuantity} 
-          />
+          {Object.entries(item)
+            .filter(([key, value]) => !['name', 'requestedQuantity', 'partNumber', 'quantity', 'matchStatus'].includes(key) && typeof value === 'object' && value !== null)
+            .map(([providerKey, providerData]) => {
+              // Format the provider name for display (e.g., 'mouser' -> 'Mouser', 'tme' -> 'Tme')
+              const formattedName = providerKey === 'tme' ? 'TME.eu' : 
+                                    providerKey === 'digikey' ? 'DigiKey' : 
+                                    providerKey === 'tti' ? 'TTI Europe' :
+                                    providerKey.charAt(0).toUpperCase() + providerKey.slice(1);
+                                    
+              return (
+                <ProviderRow 
+                  key={providerKey}
+                  providerName={formattedName} 
+                  providerData={providerData} 
+                  requestedQuantity={item.requestedQuantity} 
+                />
+              );
+            })}
         </tbody>
       </table>
     </div>
