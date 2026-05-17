@@ -1,0 +1,15 @@
+/* Header.css */
+.top-navbar {
+  background-color: var(--primary-color);
+  color: rgb(255, 255, 255);
+  padding: 1.25rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 100%;
+}
+
+.top-navbar h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0;
+}

@@ -1,0 +1,14 @@
+/* ProviderRow.css */
+.center-col {
+  text-align: center !important;
+}
+
+.stock-ok {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.stock-low {
+  color: var(--danger);
+  font-weight: 600;
+}

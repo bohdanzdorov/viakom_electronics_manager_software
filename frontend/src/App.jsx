@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import Header from './components/Header/Header';
+import ControlBar from './components/ControlBar/ControlBar';
+import ResultCard from './components/ResultCard/ResultCard';
 import './App.css';
 
 function App() {
@@ -23,7 +26,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const uploadUrl = import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK || 'http://localhost:3000/api/components/upload';
+      const uploadUrl = /*import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK ||*/ 'http://localhost:3000/api/components/upload';
 
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -54,68 +57,20 @@ function App() {
     alert("Excel Export triggered!");
   };
 
-  const parsePrice = (priceStr) => {
-    if (!priceStr || priceStr === 'N/A') return NaN;
-    const cleaned = priceStr.toString().replace(/[^0-9.]/g, '');
-    return parseFloat(cleaned);
-  };
-
-  const calculateTotal = (priceStr, quantity) => {
-    const price = parsePrice(priceStr);
-    if (isNaN(price)) return 'N/A';
-    return `$${(price * quantity).toPrecision(4)}`; // allowing 4 decimal places for total price
-  };
-
-  const displayPrice = (priceStr) => {
-    const price = parsePrice(priceStr);
-    if (isNaN(price)) return 'N/A';
-    return `$${price}`; 
-  };
-
   return (
     <div className="app-wrapper">
-      <header className="top-navbar">
-        <div className="container">
-          <h1>Viakom Electronics Manager's Software</h1>
-        </div>
-      </header>
+      <Header />
 
       <main className="container main-content">
         {/* Control Bar (Upload & Actions) */}
-        <section className="control-bar">
-          <div className="upload-group">
-            <span className="upload-label">Upload File:</span>
-            <label className="file-input-wrapper">
-              <input 
-                type="file" 
-                accept=".xlsx, .xls" 
-                onChange={handleFileChange} 
-                className="file-input"
-              />
-              <span className="file-input-btn">Browse...</span>
-              <span className="file-name" title={selectedFile ? selectedFile.name : 'No file selected'}>
-                {selectedFile ? selectedFile.name : 'No file selected'}
-              </span>
-            </label>
-            
-            <button 
-              className="btn btn-primary search-btn" 
-              onClick={handleSearch}
-              disabled={!selectedFile || isLoading}
-            >
-              {isLoading ? "Searching..." : "Search"}
-            </button>
-          </div>
-          
-          <div className="export-controls">
-            <button className="btn btn-outline" onClick={handleExportPDF}>
-              Export PDF
-            </button>
-            <button className="btn btn-outline" onClick={handleExportExcel}>
-              Export Excel
-            </button>
-          </div>
-        </section>
+        <ControlBar
+          selectedFile={selectedFile}
+          isLoading={isLoading}
+          onFileChange={handleFileChange}
+          onSearch={handleSearch}
+          onExportPDF={handleExportPDF}
+          onExportExcel={handleExportExcel}
+        />
 
         {error && <div className="error-message">{error}</div>}
 
@@ -124,66 +79,7 @@ function App() {
           <div className="results-list">
             {results.length > 0 ? (
               results.map((item, index) => (
-                <div key={index} className="component-result-card" style={{ marginBottom: '2rem', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-                  <div className="component-result-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <h3 style={{ margin: 0 }}>{item.name} - {item.requestedQuantity}stk.</h3>
-                  </div>
-                  <div className="table-responsive">
-                    <table className="results-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left', borderBottom: '2px solid #ddd', padding: '8px' }}>Seller Name</th>
-                          <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>In Stock Amount</th>
-                          <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price (Unit)</th>
-                          <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Total Price</th>
-                          <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Product Link</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Mouser Row */}
-                        <tr>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.mouser?.url && item.mouser.url !== 'N/A' ? <a href={item.mouser.url} target="_blank" rel="noreferrer">Mouser</a> : 'Mouser'}
-                          </td>
-                          <td className={`center-col ${parseInt(item.mouser?.inStock || 0) < item.requestedQuantity ? 'stock-low' : 'stock-ok'}`} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.mouser?.inStock || '0'}
-                          </td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>{displayPrice(item.mouser?.price)}</td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {calculateTotal(item.mouser?.price, item.requestedQuantity)}
-                          </td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.mouser?.url && item.mouser.url !== 'N/A' ? (
-                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                <button type="button" onClick={() => navigator.clipboard.writeText(item.mouser.url)} style={{ padding: '2px 6px', fontSize: '0.8rem', cursor: 'pointer' }}>Copy Link</button>
-                              </div>
-                            ) : '-'}
-                          </td>
-                        </tr>
-                        {/* TME Row */}
-                        <tr>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.tme?.url && item.tme.url !== 'N/A' ? <a href={item.tme.url} target="_blank" rel="noreferrer">TME.eu</a> : 'TME.eu'}
-                          </td>
-                          <td className={`center-col ${parseInt(item.tme?.inStock || 0) < item.requestedQuantity ? 'stock-low' : 'stock-ok'}`} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.tme?.inStock || '0'}
-                          </td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>{displayPrice(item.tme?.price)}</td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {calculateTotal(item.tme?.price, item.requestedQuantity)}
-                          </td>
-                          <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                            {item.tme?.url && item.tme.url !== 'N/A'? (
-                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                <button type="button" onClick={() => navigator.clipboard.writeText(item.tme.url)} style={{ padding: '2px 6px', fontSize: '0.8rem', cursor: 'pointer' }}>Copy Link</button>
-                              </div>
-                            ) : '-'}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <ResultCard key={index} item={item} />
               ))
             ) : (
               <div className="empty-state">No results to display. Upload a file and start searching.</div>
