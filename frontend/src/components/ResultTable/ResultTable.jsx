@@ -2,7 +2,56 @@ import React from 'react';
 import ProviderRow from '../ProviderRow/ProviderRow';
 import './ResultTable.css';
 
+const parsePrice = (priceStr) => {
+  if (!priceStr || priceStr === 'N/A') return NaN;
+  const cleaned = priceStr.toString().replace(/[^0-9.]/g, '');
+  return parseFloat(cleaned);
+};
+
 const ResultTable = ({ item }) => {
+  const providers = Object.entries(item)
+    .filter(([key, value]) => !['name', 'requestedQuantity', 'partNumber', 'quantity', 'matchStatus'].includes(key) && typeof value === 'object' && value !== null)
+    .map(([providerKey, providerData]) => {
+      const formattedName = providerKey === 'tme' ? 'TME.eu' : 
+                            providerKey === 'digikey' ? 'DigiKey' : 
+                            providerKey === 'tti' ? 'TTI Europe' :
+                            providerKey.charAt(0).toUpperCase() + providerKey.slice(1);
+      return { providerKey, formattedName, providerData };
+    });
+
+  // Sort logically: In-Stock > Out-of-Stock > Not Found, then by Price
+  providers.sort((a, b) => {
+    const dataA = a.providerData;
+    const dataB = b.providerData;
+
+    const isMissing = (d) => !d?.url || d.url === 'N/A' || !d?.price || d.price === 'N/A';
+    const missingA = isMissing(dataA);
+    const missingB = isMissing(dataB);
+
+    if (missingA !== missingB) return missingA ? 1 : -1;
+    if (missingA && missingB) return 0;
+
+    const stockA = parseInt(dataA.inStock || '0', 10);
+    const stockB = parseInt(dataB.inStock || '0', 10);
+    
+    // Group 1: Fully in stock | Group 2: Partially in stock | Group 3: Out of stock
+    const reqQ = item.requestedQuantity || 0;
+    const rank = (stock) => {
+      if (stock >= reqQ) return 1;
+      if (stock > 0) return 2;
+      return 3;
+    };
+
+    const rankA = rank(stockA);
+    const rankB = rank(stockB);
+
+    if (rankA !== rankB) return rankA - rankB;
+
+    const priceA = parsePrice(dataA.price);
+    const priceB = parsePrice(dataB.price);
+    return (priceA || Infinity) - (priceB || Infinity);
+  });
+
   return (
     <div className="table-responsive">
       <table className="results-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -16,24 +65,14 @@ const ResultTable = ({ item }) => {
           </tr>
         </thead>
         <tbody>
-          {Object.entries(item)
-            .filter(([key, value]) => !['name', 'requestedQuantity', 'partNumber', 'quantity', 'matchStatus'].includes(key) && typeof value === 'object' && value !== null)
-            .map(([providerKey, providerData]) => {
-              // Format the provider name for display (e.g., 'mouser' -> 'Mouser', 'tme' -> 'Tme')
-              const formattedName = providerKey === 'tme' ? 'TME.eu' : 
-                                    providerKey === 'digikey' ? 'DigiKey' : 
-                                    providerKey === 'tti' ? 'TTI Europe' :
-                                    providerKey.charAt(0).toUpperCase() + providerKey.slice(1);
-                                    
-              return (
-                <ProviderRow 
-                  key={providerKey}
-                  providerName={formattedName} 
-                  providerData={providerData} 
-                  requestedQuantity={item.requestedQuantity} 
-                />
-              );
-            })}
+          {providers.map(({ providerKey, formattedName, providerData }) => (
+            <ProviderRow 
+              key={providerKey}
+              providerName={formattedName} 
+              providerData={providerData} 
+              requestedQuantity={item.requestedQuantity} 
+            />
+          ))}
         </tbody>
       </table>
     </div>

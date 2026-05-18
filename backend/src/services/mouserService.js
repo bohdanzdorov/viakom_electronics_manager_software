@@ -11,7 +11,6 @@ const searchMouser = async (components) => {
     const results = [];
     
     // Process sequentially to avoid hitting rate limits too quickly.
-    // For production, you might want to batched/chunked requests if the API supports it.
     for (const component of components) {
         try {
             const response = await axios.post(

@@ -91,7 +91,7 @@ const searchDigikey = async (components) => {
                     const variation = part.ProductVariations[0];
                     if (variation.StandardPricing && variation.StandardPricing.length > 0) {
                         const requestedQty = component.quantity || 1;
-                        let bestPrice = variation.StandardPricing[0].UnitPrice; // fallback to the first price tier
+                        let bestPrice = variation.StandardPricing[0].UnitPrice; 
                         
                         for (const priceBreak of variation.StandardPricing) {
                             if (requestedQty >= priceBreak.BreakQuantity) {
