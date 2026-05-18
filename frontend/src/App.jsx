@@ -6,6 +6,7 @@ import './App.css';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [inputText, setInputText] = useState('');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,6 +15,10 @@ function App() {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
+  };
+
+  const handleTextChange = (e) => {
+    setInputText(e.target.value);
   };
 
   const handleSearch = async () => {
@@ -47,6 +52,39 @@ function App() {
     }
   };
 
+  const handleTextSearch = async () => {
+    if (!inputText.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Create endpoint dynamically based on the base upload link's origin
+      const baseApiUrl = (import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK || 'http://localhost:3000/api/components/upload').replace('/upload', '');
+      const parseUrl = `${baseApiUrl}/parse-text`;
+
+      const response = await fetch(parseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: inputText }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to parse text and fetch components. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResults(data.components || []);
+    } catch (err) {
+      console.error("Search error:", err);
+      setError(err.message || "An error occurred while searching");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleExportPDF = () => {
     console.log("Exporting to PDF...");
     alert("PDF Export triggered!");
@@ -65,9 +103,12 @@ function App() {
         {/* Control Bar (Upload & Actions) */}
         <ControlBar
           selectedFile={selectedFile}
+          inputText={inputText}
           isLoading={isLoading}
           onFileChange={handleFileChange}
+          onTextChange={handleTextChange}
           onSearch={handleSearch}
+          onTextSearch={handleTextSearch}
           onExportPDF={handleExportPDF}
           onExportExcel={handleExportExcel}
         />

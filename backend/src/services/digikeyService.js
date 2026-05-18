@@ -113,7 +113,7 @@ const searchDigikey = async (components) => {
                         inStock: part.QuantityAvailable ? part.QuantityAvailable.toString() : '0',
                         price: price,
                         url: part.ProductUrl || 'N/A',
-                        manufacturer: part.Manufacturer?.Name || 'N/A' // updated from .Value to .Name based on v4 specs
+                        manufacturer: part.Manufacturer?.Name || 'N/A' 
                     }
                 });
             } else {

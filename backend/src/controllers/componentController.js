@@ -2,6 +2,7 @@ const { parseExcel } = require('../services/excelService');
 const { searchMouser } = require('../services/mouserService');
 const { searchTME } = require('../services/tmeService');
 const { searchDigikey } = require('../services/digikeyService');
+const { extractComponentsFromText } = require('../services/llmService');
 const fs = require('fs');
 
 const uploadAndSearch = async (req, res) => {
@@ -55,11 +56,60 @@ const uploadAndSearch = async (req, res) => {
     }
 };
 
+const parseTextAndSearch = async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text || text.trim() === '') {
+            return res.status(400).json({ message: 'No text provided' });
+        }
+
+        // 1. Extract components from text using LLM
+        const components = await extractComponentsFromText(text);
+        
+        if (!components || components.length === 0) {
+            return res.status(400).json({ message: 'Could not extract any components from the text provided.' });
+        }
+
+        // 2. Call APIs
+        const [mouserResults, tmeResults, digikeyResults] = await Promise.all([
+            searchMouser(components),
+            searchTME(components),
+            searchDigikey(components)
+        ]);
+        
+        // Merge results together
+        const mergedResults = components.map(comp => {
+            const mouserData = mouserResults.find(m => m.name === comp.name)?.mouser || {};
+            const tmeData = tmeResults.find(t => t.name === comp.name)?.tme || {};
+            const digikeyData = digikeyResults.find(d => d.name === comp.name)?.digikey || {};
+            
+            return {
+                name: comp.name,
+                requestedQuantity: comp.quantity,
+                mouser: mouserData,
+                tme: tmeData,
+                digikey: digikeyData
+            };
+        });
+
+        // 3. Return unified data
+        res.status(200).json({ 
+            message: 'Search completed successfully',
+            count: mergedResults.length,
+            components: mergedResults 
+        });
+    } catch (error) {
+        console.error('Error in parseTextAndSearch:', error);
+        res.status(500).json({ message: 'Internal server error processing text', error: error.message });
+    }
+};
+
 const exportData = async (req, res) => {
     res.status(501).json({ message: 'Export not implemented yet' });
 };
 
 module.exports = {
     uploadAndSearch,
+    parseTextAndSearch,
     exportData
 };

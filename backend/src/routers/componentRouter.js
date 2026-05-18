@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const router = express.Router();
-const { uploadAndSearch, exportData } = require('../controllers/componentController');
+const { uploadAndSearch, exportData, parseTextAndSearch } = require('../controllers/componentController');
 
 // Ensure uploads directory exists for cloud deployments (like Render)
 const uploadDir = 'uploads/';
@@ -22,6 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/upload', upload.single('file'), uploadAndSearch);
+router.post('/parse-text', parseTextAndSearch);
 router.post('/export', exportData);
 
 module.exports = router;
