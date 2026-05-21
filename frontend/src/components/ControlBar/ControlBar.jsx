@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './ControlBar.css';
 
 const ControlBar = ({
   selectedFile,
   inputText,
   isLoading,
+  coefficients,
+  onCoefficientsChange,
   onFileChange,
   onTextChange,
   onSearch,
@@ -12,8 +14,47 @@ const ControlBar = ({
   onExportPDF,
   onExportExcel
 }) => {
+  const [localCoeffs, setLocalCoeffs] = useState({ mouser: 1.5, tme: 1.5, digikey: 1.5 });
+
+  useEffect(() => {
+    if (coefficients) {
+      setLocalCoeffs(coefficients);
+    }
+  }, [coefficients]);
+
+  const handleCoeffChange = (e, provider) => {
+    setLocalCoeffs({ ...localCoeffs, [provider]: parseFloat(e.target.value) });
+  };
+
+  const handleSaveCoeffs = () => {
+    if (onCoefficientsChange) {
+      onCoefficientsChange(localCoeffs);
+    }
+  };
+
   return (
     <section className="control-bar" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      
+      {/* Managers Coefficients Section */}
+      <div className="coefficients-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', width: '100%', flexWrap: 'wrap' }}>
+        <span className="upload-label">Managers Coefficients:</span>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span>Mouser:</span>
+            <input type="number" step="0.1" value={localCoeffs.mouser} onChange={(e) => handleCoeffChange(e, 'mouser')} style={{ width: '60px', padding: '0.25rem' }} />
+          </label>
+          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span>TME:</span>
+            <input type="number" step="0.1" value={localCoeffs.tme} onChange={(e) => handleCoeffChange(e, 'tme')} style={{ width: '60px', padding: '0.25rem' }} />
+          </label>
+          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span>DigiKey:</span>
+            <input type="number" step="0.1" value={localCoeffs.digikey} onChange={(e) => handleCoeffChange(e, 'digikey')} style={{ width: '60px', padding: '0.25rem' }} />
+          </label>
+          <button className="btn btn-outline" onClick={handleSaveCoeffs} style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}>Save Rates</button>
+        </div>
+      </div>
+
       <div className="upload-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <span className="upload-label">Upload File:</span>
         <label className="file-input-wrapper">

@@ -19,7 +19,13 @@ const displayPrice = (priceStr) => {
   return `$${price}`; 
 };
 
-const ProviderRow = ({ providerName, providerData, requestedQuantity }) => {
+const calculateCoeffPrice = (priceStr, coefficient) => {
+  const price = parsePrice(priceStr);
+  if (isNaN(price)) return 'N/A';
+  return `$${(price * (coefficient || 1)).toFixed(4)}`; 
+};
+
+const ProviderRow = ({ providerName, providerData, requestedQuantity, coefficient }) => {
   const inStock = providerData?.inStock || '0';
   const isStockLow = parseInt(inStock) < requestedQuantity;
   const url = providerData?.url;
@@ -35,6 +41,9 @@ const ProviderRow = ({ providerName, providerData, requestedQuantity }) => {
       </td>
       <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
         {displayPrice(providerData?.price)}
+      </td>
+      <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+        {calculateCoeffPrice(providerData?.price, coefficient)}
       </td>
       <td className="center-col" style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
         {calculateTotal(providerData?.price, requestedQuantity)}

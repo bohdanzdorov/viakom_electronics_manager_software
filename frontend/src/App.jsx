@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header/Header';
 import ControlBar from './components/ControlBar/ControlBar';
 import ResultCard from './components/ResultCard/ResultCard';
@@ -10,6 +10,35 @@ function App() {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [coefficients, setCoefficients] = useState({ mouser: 1.5, tme: 1.5, digikey: 1.5 });
+
+  useEffect(() => {
+    const fetchCoefficients = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/coefficients`);
+        if (response.ok) {
+          const data = await response.json();
+          setCoefficients(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial coefficients:", err);
+      }
+    };
+    fetchCoefficients();
+  }, []);
+
+  const handleCoefficientsChange = async (newCoeffs) => {
+    setCoefficients(newCoeffs);
+    try {
+      await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/coefficients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCoeffs)
+      });
+    } catch (err) {
+      console.error("Failed to save coefficients:", err);
+    }
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -31,7 +60,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const uploadUrl = import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK || 'http://localhost:3000/api/components/upload';
+      const uploadUrl = `${import.meta.env.VITE_BACKEND_LINK}api/components/upload` || 'http://localhost:3000/api/components/upload';
 
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -60,7 +89,7 @@ function App() {
 
     try {
       // Create endpoint dynamically based on the base upload link's origin
-      const baseApiUrl = (import.meta.env.VITE_BACKEND_FILE_UPLOAD_LINK || 'http://localhost:3000/api/components/upload').replace('/upload', '');
+      const baseApiUrl = (`${import.meta.env.VITE_BACKEND_LINK}api/components/upload` || 'http://localhost:3000/api/components/upload').replace('/upload', '');
       const parseUrl = `${baseApiUrl}/parse-text`;
 
       const response = await fetch(parseUrl, {
@@ -105,6 +134,8 @@ function App() {
           selectedFile={selectedFile}
           inputText={inputText}
           isLoading={isLoading}
+          coefficients={coefficients}
+          onCoefficientsChange={handleCoefficientsChange}
           onFileChange={handleFileChange}
           onTextChange={handleTextChange}
           onSearch={handleSearch}
@@ -120,7 +151,7 @@ function App() {
           <div className="results-list">
             {results.length > 0 ? (
               results.map((item, index) => (
-                <ResultCard key={index} item={item} />
+                <ResultCard key={index} item={item} coefficients={coefficients} />
               ))
             ) : (
               <div className="empty-state">No results to display. Upload a file and start searching.</div>

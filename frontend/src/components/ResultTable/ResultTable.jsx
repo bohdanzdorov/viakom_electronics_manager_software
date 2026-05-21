@@ -8,7 +8,7 @@ const parsePrice = (priceStr) => {
   return parseFloat(cleaned);
 };
 
-const ResultTable = ({ item }) => {
+const ResultTable = ({ item, coefficients }) => {
   const providers = Object.entries(item)
     .filter(([key, value]) => !['name', 'requestedQuantity', 'partNumber', 'quantity', 'matchStatus'].includes(key) && typeof value === 'object' && value !== null)
     .map(([providerKey, providerData]) => {
@@ -60,6 +60,7 @@ const ResultTable = ({ item }) => {
             <th style={{ textAlign: 'left', borderBottom: '2px solid #ddd', padding: '8px' }}>Seller Name</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>In Stock Amount</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price (Unit)</th>
+            <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price w/ Coeff (Unit)</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Total Price</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Product Link</th>
           </tr>
@@ -71,6 +72,7 @@ const ResultTable = ({ item }) => {
               providerName={formattedName} 
               providerData={providerData} 
               requestedQuantity={item.requestedQuantity} 
+              coefficient={coefficients?.[providerKey] || 1.0}
             />
           ))}
         </tbody>
