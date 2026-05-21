@@ -8,7 +8,7 @@ const parsePrice = (priceStr) => {
   return parseFloat(cleaned);
 };
 
-const ResultTable = ({ item, coefficients }) => {
+const ResultTable = ({ item, coefficients, exchangeRate }) => {
   const providers = Object.entries(item)
     .filter(([key, value]) => !['name', 'requestedQuantity', 'partNumber', 'quantity', 'matchStatus'].includes(key) && typeof value === 'object' && value !== null)
     .map(([providerKey, providerData]) => {
@@ -47,8 +47,10 @@ const ResultTable = ({ item, coefficients }) => {
 
     if (rankA !== rankB) return rankA - rankB;
 
-    const priceA = parsePrice(dataA.price);
-    const priceB = parsePrice(dataB.price);
+    const coeffA = coefficients?.[a.providerKey] || 1.0;
+    const coeffB = coefficients?.[b.providerKey] || 1.0;
+    const priceA = parsePrice(dataA.price) * coeffA;
+    const priceB = parsePrice(dataB.price) * coeffB;
     return (priceA || Infinity) - (priceB || Infinity);
   });
 
@@ -61,8 +63,7 @@ const ResultTable = ({ item, coefficients }) => {
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>In Stock Amount</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price (Unit)</th>
             <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price w/ Coeff (Unit)</th>
-            <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Total Price</th>
-            <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Product Link</th>
+            <th className="center-col" style={{ borderBottom: '2px solid #ddd', padding: '8px' }}>Price w/ Coeff (UAH)</th>
           </tr>
         </thead>
         <tbody>
@@ -73,6 +74,7 @@ const ResultTable = ({ item, coefficients }) => {
               providerData={providerData} 
               requestedQuantity={item.requestedQuantity} 
               coefficient={coefficients?.[providerKey] || 1.0}
+              exchangeRate={exchangeRate}
             />
           ))}
         </tbody>

@@ -11,6 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [coefficients, setCoefficients] = useState({ mouser: 1.5, tme: 1.5, digikey: 1.5 });
+  const [exchangeRate, setExchangeRate] = useState(null);
 
   useEffect(() => {
     const fetchCoefficients = async () => {
@@ -24,7 +25,21 @@ function App() {
         console.error("Failed to fetch initial coefficients:", err);
       }
     };
+
+    const fetchExchangeRate = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/exchange-rate`);
+        if (response.ok) {
+          const data = await response.json();
+          setExchangeRate(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch exchange rate:", err);
+      }
+    };
+
     fetchCoefficients();
+    fetchExchangeRate();
   }, []);
 
   const handleCoefficientsChange = async (newCoeffs) => {
@@ -126,7 +141,7 @@ function App() {
 
   return (
     <div className="app-wrapper">
-      <Header />
+      <Header exchangeRate={exchangeRate} />
 
       <main className="container main-content">
         {/* Control Bar (Upload & Actions) */}
@@ -151,7 +166,7 @@ function App() {
           <div className="results-list">
             {results.length > 0 ? (
               results.map((item, index) => (
-                <ResultCard key={index} item={item} coefficients={coefficients} />
+                <ResultCard key={index} item={item} coefficients={coefficients} exchangeRate={exchangeRate} />
               ))
             ) : (
               <div className="empty-state">No results to display. Upload a file and start searching.</div>
