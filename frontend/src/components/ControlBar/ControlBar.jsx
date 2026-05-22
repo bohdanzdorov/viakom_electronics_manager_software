@@ -60,7 +60,7 @@ const ControlBar = ({
         <label className="file-input-wrapper">
           <input 
             type="file" 
-            accept=".xlsx, .xls" 
+            accept=".xlsx, .xls, .pdf" 
             onChange={onFileChange} 
             className="file-input"
           />

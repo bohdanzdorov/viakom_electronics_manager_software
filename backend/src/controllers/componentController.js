@@ -1,4 +1,5 @@
 const { parseExcel } = require('../services/excelService');
+const { parsePdf } = require('../services/pdfService');
 const { searchMouser } = require('../services/mouserService');
 const { searchTME } = require('../services/tmeService');
 const { searchDigikey } = require('../services/digikeyService');
@@ -11,25 +12,37 @@ const uploadAndSearch = async (req, res) => {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        // 1. Parse the uploaded Excel file
-        const components = await parseExcel(req.file.path);
-        
+        const filePath = req.file.path;
+        const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+        const mimeType = req.file.mimetype;
+
+        let components = [];
+        if (fileExt === 'pdf' || mimeType === 'application/pdf') {
+            components = await parsePdf(filePath);
+        } else {
+            components = await parseExcel(filePath);
+        }
+
         // 2. Call APIs
         const [mouserResults, tmeResults, digikeyResults] = await Promise.all([
             searchMouser(components),
             searchTME(components),
             searchDigikey(components)
         ]);
-        
-        // Cleanup the file from the 'uploads/' folder since we have the data in memory
-        fs.unlinkSync(req.file.path);
 
+        // Cleanup the file from the 'uploads/' folder since we have the data in memory
+        try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch (cleanupError) {
+            console.error(`Failed to delete file ${filePath}:`, cleanupError.message);
+        }
+        
         // Merge results together
         const mergedResults = components.map(comp => {
             const mouserData = mouserResults.find(m => m.name === comp.name)?.mouser || {};
             const tmeData = tmeResults.find(t => t.name === comp.name)?.tme || {};
             const digikeyData = digikeyResults.find(d => d.name === comp.name)?.digikey || {};
-            
+
             return {
                 name: comp.name,
                 requestedQuantity: comp.quantity,
@@ -40,16 +53,20 @@ const uploadAndSearch = async (req, res) => {
         });
 
         // 3. Return unified data
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'Search completed successfully',
             count: mergedResults.length,
-            components: mergedResults 
+            components: mergedResults
         });
     } catch (error) {
         console.error('Error in uploadAndSearch:', error);
-        
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+
+        if (req.file) {
+            try {
+                if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+            } catch (cleanupError) {
+                console.error(`Failed to delete file in catch block ${req.file.path}:`, cleanupError.message);
+            }
         }
 
         res.status(500).json({ message: 'Internal server error processing file', error: error.message });
@@ -65,7 +82,7 @@ const parseTextAndSearch = async (req, res) => {
 
         // 1. Extract components from text using LLM
         const components = await extractComponentsFromText(text);
-        
+
         if (!components || components.length === 0) {
             return res.status(400).json({ message: 'Could not extract any components from the text provided.' });
         }
@@ -76,13 +93,13 @@ const parseTextAndSearch = async (req, res) => {
             searchTME(components),
             searchDigikey(components)
         ]);
-        
+
         // Merge results together
         const mergedResults = components.map(comp => {
             const mouserData = mouserResults.find(m => m.name === comp.name)?.mouser || {};
             const tmeData = tmeResults.find(t => t.name === comp.name)?.tme || {};
             const digikeyData = digikeyResults.find(d => d.name === comp.name)?.digikey || {};
-            
+
             return {
                 name: comp.name,
                 requestedQuantity: comp.quantity,
@@ -93,10 +110,10 @@ const parseTextAndSearch = async (req, res) => {
         });
 
         // 3. Return unified data
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'Search completed successfully',
             count: mergedResults.length,
-            components: mergedResults 
+            components: mergedResults
         });
     } catch (error) {
         console.error('Error in parseTextAndSearch:', error);
