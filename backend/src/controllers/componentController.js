@@ -83,19 +83,27 @@ const parseTextAndSearch = async (req, res) => {
         // 1. Extract components from text using LLM
         const components = await extractComponentsFromText(text);
 
-        if (!components || components.length === 0) {
+        if (!Array.isArray(components)) {
+            return res.status(400).json({ message: 'Could not extract a valid component list from text.' });
+        }
+
+        const validComponents = components.filter(
+            (component) => component && typeof component.name === 'string' && component.name.trim() !== ''
+        );
+
+        if (validComponents.length === 0) {
             return res.status(400).json({ message: 'Could not extract any components from the text provided.' });
         }
 
         // 2. Call APIs
         const [mouserResults, tmeResults, digikeyResults] = await Promise.all([
-            searchMouser(components),
-            searchTME(components),
-            searchDigikey(components)
+            searchMouser(validComponents),
+            searchTME(validComponents),
+            searchDigikey(validComponents)
         ]);
 
         // Merge results together
-        const mergedResults = components.map(comp => {
+        const mergedResults = validComponents.map(comp => {
             const mouserData = mouserResults.find(m => m.name === comp.name)?.mouser || {};
             const tmeData = tmeResults.find(t => t.name === comp.name)?.tme || {};
             const digikeyData = digikeyResults.find(d => d.name === comp.name)?.digikey || {};
