@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
     const fetchCoefficients = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/coefficients`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/coefficients`);
         if (response.ok) {
           const data = await response.json();
           setCoefficients(data);
@@ -28,7 +28,7 @@ function App() {
 
     const fetchExchangeRate = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/exchange-rate`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exchange-rate`);
         if (response.ok) {
           const data = await response.json();
           setExchangeRate(data);
@@ -45,7 +45,7 @@ function App() {
   const handleCoefficientsChange = async (newCoeffs) => {
     setCoefficients(newCoeffs);
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_LINK}api/coefficients`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/coefficients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCoeffs)
@@ -75,7 +75,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const uploadUrl = `${import.meta.env.VITE_BACKEND_LINK}api/components/upload` || 'http://localhost:3000/api/components/upload';
+      const uploadUrl = `${import.meta.env.VITE_API_URL}/api/components/upload` || 'http://localhost:3000/api/components/upload';
 
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -104,7 +104,7 @@ function App() {
 
     try {
       // Create endpoint dynamically based on the base upload link's origin
-      const baseApiUrl = (`${import.meta.env.VITE_BACKEND_LINK}api/components/upload` || 'http://localhost:3000/api/components/upload').replace('/upload', '');
+      const baseApiUrl = (`${import.meta.env.VITE_API_URL}/api/components/upload` || 'http://localhost:3000/api/components/upload').replace('/upload', '');
       const parseUrl = `${baseApiUrl}/parse-text`;
 
       const response = await fetch(parseUrl, {
