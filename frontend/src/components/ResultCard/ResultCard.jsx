@@ -1,4 +1,3 @@
-import React from 'react';
 import ResultTable from '../ResultTable/ResultTable';
 import './ResultCard.css';
 

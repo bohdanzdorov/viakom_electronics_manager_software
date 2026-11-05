@@ -7,6 +7,9 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+RUN mkdir -p /app/uploads \
+    && chown -R node:node /app
+
 ENV NODE_ENV=production
 EXPOSE 3000
 USER node
