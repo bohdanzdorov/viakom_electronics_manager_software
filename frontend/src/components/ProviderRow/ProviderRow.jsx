@@ -1,4 +1,3 @@
-import React from 'react';
 import './ProviderRow.css';
 
 const parsePrice = (priceStr) => {

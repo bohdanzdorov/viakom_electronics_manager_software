@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import './ControlBar.css';
+
+const DEFAULT_COEFFS = { mouser: 1.5, tme: 1.5, digikey: 1.5 };
 
 const ControlBar = ({
   selectedFile,
@@ -14,13 +16,15 @@ const ControlBar = ({
   onExportPDF,
   onExportExcel
 }) => {
-  const [localCoeffs, setLocalCoeffs] = useState({ mouser: 1.5, tme: 1.5, digikey: 1.5 });
+  const [localCoeffs, setLocalCoeffs] = useState(coefficients || DEFAULT_COEFFS);
+  const [prevCoefficients, setPrevCoefficients] = useState(coefficients);
 
-  useEffect(() => {
+  if (coefficients !== prevCoefficients) {
+    setPrevCoefficients(coefficients);
     if (coefficients) {
       setLocalCoeffs(coefficients);
     }
-  }, [coefficients]);
+  }
 
   const handleCoeffChange = (e, provider) => {
     setLocalCoeffs({ ...localCoeffs, [provider]: parseFloat(e.target.value) });

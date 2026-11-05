@@ -1,4 +1,3 @@
-import React from 'react';
 import ProviderRow from '../ProviderRow/ProviderRow';
 import './ResultTable.css';
 
