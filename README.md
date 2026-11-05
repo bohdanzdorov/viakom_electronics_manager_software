@@ -18,6 +18,10 @@ The tool replaces a manual process that previously required a manager to check d
 
 The typical workflow reduces a two-to-three-hour manual task to seconds for structured files and a few minutes for text extraction and distributor searches, depending on provider response times.
 
+## Deployment
+
+The webpage is deployed at [https://viakom-electronics-managers-software.netlify.app/](https://viakom-electronics-managers-software.netlify.app/)
+
 ## Current status
 
 This project is in active development and is used internally. The following items are not complete yet:
