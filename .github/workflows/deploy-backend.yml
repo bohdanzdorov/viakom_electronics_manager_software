@@ -1,0 +1,80 @@
+name: Deploy backend to AWS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-north-1
+  ECR_REPOSITORY: my-backend
+  SECRET_ARN: arn:aws:secretsmanager:eu-north-1:457286117342:secret:my-backend/prod-iprR9z
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          docker build --platform linux/amd64 -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to ECS Express Mode
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          service-name: my-backend-68c2
+          cluster: default
+          image: ${{ steps.build.outputs.image }}
+          execution-role-arn: arn:aws:iam::457286117342:role/ecsTaskExecutionRole-my-backend
+          infrastructure-role-arn: arn:aws:iam::457286117342:role/ecsInfrastructureRoleForExpressServices
+          container-port: 3000
+          # Must match the health check path configured on the service in the ECS console
+          health-check-path: /api/health
+          cpu: "256"
+          memory: "512"
+          min-task-count: 1
+          max-task-count: 1
+          environment-variables: |
+            [
+              {"name": "PORT", "value": "3000"}
+            ]
+          secrets: |
+            [
+              {"name": "GROQ_API_KEY", "valueFrom": "${{ env.SECRET_ARN }}:GROQ_API_KEY::"},
+              {"name": "MOUSER_API_KEY", "valueFrom": "${{ env.SECRET_ARN }}:MOUSER_API_KEY::"},
+              {"name": "MOUSER_USERNAME", "valueFrom": "${{ env.SECRET_ARN }}:MOUSER_USERNAME::"},
+              {"name": "MOUSER_PROJECT_NAME", "valueFrom": "${{ env.SECRET_ARN }}:MOUSER_PROJECT_NAME::"},
+              {"name": "DIGIKEY_CALLBACK_URL", "valueFrom": "${{ env.SECRET_ARN }}:DIGIKEY_CALLBACK_URL::"},
+              {"name": "TME_TOKEN", "valueFrom": "${{ env.SECRET_ARN }}:TME_TOKEN::"},
+              {"name": "TME_APP_SECRET", "valueFrom": "${{ env.SECRET_ARN }}:TME_APP_SECRET::"},
+              {"name": "DIGIKEY_CLIENT_ID", "valueFrom": "${{ env.SECRET_ARN }}:DIGIKEY_CLIENT_ID::"},
+              {"name": "DIGIKEY_CLIENT_SECRET", "valueFrom": "${{ env.SECRET_ARN }}:DIGIKEY_CLIENT_SECRET::"}
+            ]
